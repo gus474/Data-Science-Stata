@@ -1,0 +1,132 @@
+STATA COMMANDS:
+
+use "C:\Users\gus474\Desktop\canadiancollege.dta", clear
+
+ssc install estout, replace
+
+capture log close
+log using log.smcl, replace
+
+
+*process
+gen female = sex=="F"
+encode mtongue, gen(lang)
+ 
+gen campus = campus1 
+replace campus = 2 if campus2
+replace campus = 3 if campus3
+
+gen canada = birthplace=="Canada"
+
+*limit sample
+keep if !missing(gradin4)
+keep if !missing(gradin5)
+keep if !missing(gradin6)
+
+
+*summary statistics
+	eststo clear
+	estpost sum gradin4 gradin5 gradin6 hsgrade_pct GPA_year1 GPA_year2 female age_at_entry probation_year1 probation_year2 suspended_year1 suspended_year2 campus2 campus3 canada, detail
+	esttab using "tables.rtf", replace cells("count mean sd min max") noobs title({\b Table 1.} {\i Summary Statistics}) nonumbers label
+
+
+*regressions 
+	
+
+*4 years
+	eststo clear
+
+	reg gradin4 hsgrade_pct GPA_year1 GPA_year2 female i.lang age_at_entry probation_year1 probation_year2 suspended_year1 suspended_year2 campus2 campus3 canada, robust
+	eststo OLS
+
+	logit gradin4 hsgrade_pct GPA_year1 GPA_year2 female i.lang age_at_entry probation_year1 probation_year2 suspended_year1 suspended_year2 campus2 campus3 canada
+	eststo logit
+	margins, dydx(*) predict() post atmeans
+	eststo MFX
+	
+	esttab   OLS logit MFX  using "tables.rtf" , append label se title({\b Table 2} {\i 4-Year Graduation Regressions}) mtitles("OLS" "Logit" "MFX" )
+						
+	
+	
+*5 years
+
+	reg gradin5 hsgrade_pct GPA_year1 GPA_year2 female i.lang age_at_entry probation_year1 probation_year2 suspended_year1 suspended_year2 campus2 campus3 canada, robust
+	eststo OLS
+
+	logit gradin5 hsgrade_pct GPA_year1 GPA_year2 female i.lang age_at_entry probation_year1 probation_year2 suspended_year1 suspended_year2 campus2 campus3 canada
+	eststo logit
+	margins, dydx(*) predict() post atmeans
+	eststo MFX
+	
+	esttab   OLS logit MFX  using "tables.rtf" , append label se title({\b Table 3} {\i 5-Year Graduation Regressions}) mtitles("OLS" "Logit" "MFX" )
+						
+	
+	
+*6 years
+
+	reg gradin6 hsgrade_pct GPA_year1 GPA_year2 female i.lang age_at_entry probation_year1 probation_year2 suspended_year1 suspended_year2 campus2 campus3 canada, robust
+	eststo OLS
+
+	logit gradin6 hsgrade_pct GPA_year1 GPA_year2 female i.lang age_at_entry probation_year1 probation_year2 suspended_year1 suspended_year2 campus2 campus3 canada
+	eststo logit
+	margins, dydx(*) predict() post atmeans
+	eststo MFX
+	
+	esttab   OLS logit MFX  using "tables.rtf" , append label se title({\b Table 4} {\i 6-Year Graduation Regressions}) mtitles("OLS" "Logit" "MFX" )
+						
+	
+*margins plot
+	*female gps
+		logit gradin4 c.GPA_year2##c.GPA_year2##i.female hsgrade_pct GPA_year1 i.lang age_at_entry probation_year1 probation_year2 suspended_year1 suspended_year2 campus2 campus3 canada
+
+		margins female, atmeans at(GPA_year2=(0(.5)4))
+		marginsplot, saving(marginsplot_female_gpa_gradin4_01.gph, replace) title(4-Year)
+		graph export marginsplot_female_gpa_gradin4_01.png, replace width(2000)	
+		
+		
+		logit gradin5 c.GPA_year2##c.GPA_year2##i.female hsgrade_pct GPA_year1 i.lang age_at_entry probation_year1 probation_year2 suspended_year1 suspended_year2 campus2 campus3 canada
+
+		margins female, atmeans at(GPA_year2=(0(.5)4))
+		marginsplot, saving(marginsplot_female_gpa_gradin5_01.gph, replace)  title(5-Year)
+		graph export marginsplot_female_gpa_gradin5_01.png, replace width(2000)
+
+
+			
+		logit gradin6 c.GPA_year2##c.GPA_year2##i.female hsgrade_pct GPA_year1 i.lang age_at_entry probation_year1 probation_year2 suspended_year1 suspended_year2 campus2 campus3 canada
+
+		margins female, atmeans at(GPA_year2=(0(.5)4))
+		marginsplot, saving(marginsplot_female_gpa_gradin6_01.gph, replace)  title(6-Year)
+		graph export marginsplot_female_gpa_gradin6_01.png, replace width(2000)
+
+
+		graph combine marginsplot_female_gpa_gradin4_01.gph marginsplot_female_gpa_gradin5_01.gph marginsplot_female_gpa_gradin6_01.gph, ycommon xcommon title(Probability of Graduating Male vs Female)
+		graph export marginsplot_female_gpa_gradincomb_01.png, replace width(2000)
+
+	*campus gps
+		logit gradin4 c.GPA_year2##c.GPA_year2##i.campus i.female hsgrade_pct GPA_year1 i.lang age_at_entry probation_year1 probation_year2 suspended_year1 suspended_year2 canada
+
+		margins campus, atmeans at(GPA_year2=(0(.5)4))
+		marginsplot, saving(marginsplot_campus_gpa_gradin4_01.gph, replace) title(4-Year)
+		graph export marginsplot_campus_gpa_gradin4_01.png, replace width(2000)	
+		
+		
+		logit gradin5 c.GPA_year2##c.GPA_year2##i.campus i.female hsgrade_pct GPA_year1 i.lang age_at_entry probation_year1 probation_year2 suspended_year1 suspended_year2 canada
+
+		margins campus, atmeans at(GPA_year2=(0(.5)4))
+		marginsplot, saving(marginsplot_campus_gpa_gradin5_01.gph, replace)  title(5-Year)
+		graph export marginsplot_campus_gpa_gradin5_01.png, replace width(2000)
+
+
+			
+		logit gradin6 c.GPA_year2##c.GPA_year2##i.campus i.female hsgrade_pct GPA_year1 i.lang age_at_entry probation_year1 probation_year2 suspended_year1 suspended_year2
+
+		margins campus, atmeans at(GPA_year2=(0(.5)4))
+		marginsplot, saving(marginsplot_campus_gpa_gradin6_01.gph, replace)  title(6-Year)
+		graph export marginsplot_campus_gpa_gradin6_01.png, replace width(2000)
+
+
+		graph combine marginsplot_campus_gpa_gradin4_01.gph marginsplot_campus_gpa_gradin5_01.gph marginsplot_campus_gpa_gradin6_01.gph, ycommon xcommon title(Probability of Graduating Between Campuses)
+		graph export marginsplot_campus_gpa_gradincomb_01.png, replace width(2000)
+
+	
+log close
